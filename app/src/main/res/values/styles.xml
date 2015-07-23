@@ -1,0 +1,12 @@
+<resources>
+
+    <style name="Theme.Base" parent="android:Theme.Light">
+
+    </style>
+
+    <style name="Theme.NoTitle" parent="Theme.Base">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+</resources>
