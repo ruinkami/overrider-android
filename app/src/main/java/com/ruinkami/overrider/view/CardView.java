@@ -26,7 +26,7 @@ public class CardView extends LinearLayout {
         super.onFinishInflate();
         im_card_lv = (ImageView) this.findViewById(R.id.card_lv);
         im_card_pic = (ImageView) this.findViewById(R.id.card_pic);
-        tv_card_title = (TextView) this.findViewById(R.id.card_pic);
+        tv_card_title = (TextView) this.findViewById(R.id.card_title);
         tv_card_info = (TextView) this.findViewById(R.id.card_info);
     }
 
