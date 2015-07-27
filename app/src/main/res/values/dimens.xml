@@ -1,17 +1,17 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="layout_phase_width">290dp</dimen>
-    <dimen name="layout_phase_height">20dp</dimen>
-    <dimen name="layout_card_field_width">90dp</dimen>
-    <dimen name="layout_card_field_height">125dp</dimen>
-    <dimen name="layout_deck_width">30dp</dimen>
-    <dimen name="layout_deck_height">95dp</dimen>
-    <dimen name="layout_card_handlist_width">300dp</dimen>
-    <dimen name="layout_card_handlist_height">125dp</dimen>
-    <dimen name="layout_avatar_length">75dp</dimen>
-    <dimen name="layout_info_width">30dp</dimen>
-    <dimen name="layout_info_height">175dp</dimen>
+    <dimen name="phase_width">290dp</dimen>
+    <dimen name="phase_height">20dp</dimen>
+    <dimen name="card_width">90dp</dimen>
+    <dimen name="card_height">125dp</dimen>
+    <dimen name="deck_width">30dp</dimen>
+    <dimen name="deck_height">95dp</dimen>
+    <dimen name="hand_card_list_width">300dp</dimen>
+    <dimen name="hand_card_list_height">125dp</dimen>
+    <dimen name="avatar_length">75dp</dimen>
+    <dimen name="info_width">30dp</dimen>
+    <dimen name="info_height">175dp</dimen>
 
 
-    <dimen name="layout_margin_default">5dp</dimen>
+    <dimen name="margin_default">5dp</dimen>
 </resources>

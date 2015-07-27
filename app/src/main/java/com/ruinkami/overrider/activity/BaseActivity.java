@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.ruinkami.overrider.entity.TideObject;
 import com.ruinkami.overrider.util.URLBase64;
