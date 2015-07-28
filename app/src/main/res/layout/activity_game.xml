@@ -3,8 +3,4 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     tools:context="com.ruinkami.overrider.activity.GameActivity">
-    <com.ruinkami.overrider.view.GameView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        />
 </LinearLayout>

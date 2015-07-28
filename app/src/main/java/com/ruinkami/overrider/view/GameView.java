@@ -5,11 +5,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.view.View;
+import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
+import android.view.SurfaceView;
 
 import com.ruinkami.overrider.R;
 
@@ -19,8 +21,8 @@ import java.lang.reflect.Field;
  * Created by ruinkami on 2015/7/24.
  */
 
-public class GameView extends View {
-    Paint mPaint; //画笔,包含了画几何图形、文本等的样式和颜色信息
+public class GameView extends SurfaceView implements Callback {
+    //Paint mPaint; //画笔,包含了画几何图形、文本等的样式和颜色信息
     Bitmap mBitmap1, mBitmap2;
     int screenWidth, screenHeight;
     int cardWidth, cardHeight;
@@ -30,15 +32,13 @@ public class GameView extends View {
     int avatarLength;
     int infoWidth, infoHeight;
     int marginDefault;
+    LoopThread thread;
 
     public GameView(Context context) {
         super(context);
         initialView(context);
-    }
+        init(); //初始化,设置生命周期回调方法
 
-    public GameView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialView(context);
     }
 
     public void initialView(Context context){
@@ -64,86 +64,154 @@ public class GameView extends View {
         mBitmap1 = resizeBitmap(mBitmap1, cardWidth, cardHeight);
         mBitmap2 = BitmapFactory.decodeResource(getResources(), R.drawable.c2);
 
-        mPaint = new Paint();
+        //mPaint = new Paint();
+    }
+
+    private void init(){
+        SurfaceHolder holder = getHolder();
+        holder.addCallback(this); //设置Surface生命周期回调
+        thread = new LoopThread(holder, getContext());
     }
 
     @Override
-    public void onDraw(Canvas canvas){
-        super.onDraw(canvas);
-        mPaint.setStyle(Paint.Style.FILL);
+    public void surfaceChanged(SurfaceHolder holder, int format, int width,int height) {
+    }
 
-        //绘制底部场地
-        mPaint.setColor(0xFFDDDDDD);
-        canvas.drawRect(0, 0, screenWidth, screenHeight, mPaint);
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        thread.isRunning = true;
+        thread.start();
+    }
 
-        //绘制中间的游戏阶段区域
-        mPaint.setColor(0xFFB2C3B2);
-        canvas.drawRect(screenWidth / 2 - phaseWidth / 2, screenHeight / 2 - phaseHeight / 2,
-                screenWidth / 2 + phaseWidth / 2, screenHeight / 2 + phaseHeight / 2, mPaint);
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        thread.isRunning = false;
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-        //绘制卡牌放置区域
-        mPaint.setColor(0xFFC3AB85);
-        //player2
-        canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                screenWidth / 2 + cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
-        canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
-        canvas.drawRect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
-        //player1
-        canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                screenWidth / 2 + cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
-        canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
-        canvas.drawRect(screenWidth / 2  + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
+    /**
+     * 执行绘制的绘制线程
+     * @author Administrator
+     *
+     */
+    class LoopThread extends Thread{
 
-        //绘制手卡区域
-        mPaint.setColor(0xFFC36E81);
-        //player2
-        canvas.drawRect(0, 0,
-                handCardListWidth, handCardListHeight, mPaint);
-        //player1
-        canvas.drawRect(screenWidth - handCardListWidth, screenHeight - handCardListHeight,
-                screenWidth, screenHeight, mPaint);
+        SurfaceHolder surfaceHolder;
+        Context context;
+        boolean isRunning;
+        float radius = 10f;
+        Paint mPaint;
+
+        public LoopThread(SurfaceHolder surfaceHolder,Context context){
+
+            this.surfaceHolder = surfaceHolder;
+            this.context = context;
+            isRunning = false;
+
+            mPaint = new Paint();
+            mPaint.setColor(Color.YELLOW);
+            mPaint.setStyle(Paint.Style.STROKE);
+        }
+
+        @Override
+        public void run() {
+            Canvas canvas = null;
+            while(isRunning){
+                try{
+                    synchronized (surfaceHolder) {
+                        canvas = surfaceHolder.lockCanvas(null);
+                        doDraw(canvas);
+                        //通过它来控制帧数执行一次绘制后休息50ms
+                        Thread.sleep(50);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (canvas != null && surfaceHolder != null) {
+                        surfaceHolder.unlockCanvasAndPost(canvas);
+                    }
+                }
+            }
+        }
+
+        public void doDraw(Canvas canvas){
+            //这个很重要，清屏操作，清楚掉上次绘制的残留图像
+//            canvas.drawColor(Color.BLACK);
+//            canvas.translate(200, 200);
+//            canvas.drawCircle(0, 0, radius++, mPaint);
+//            if(radius > 100){
+//                radius = 10f;
+//            }
+
+            mPaint.setStyle(Paint.Style.FILL);
+
+            //绘制底部场地
+            mPaint.setColor(0xFFDDDDDD);
+            canvas.drawRect(0, 0, screenWidth, screenHeight, mPaint);
+
+            //绘制中间的游戏阶段区域
+            mPaint.setColor(0xFFB2C3B2);
+            canvas.drawRect(screenWidth / 2 - phaseWidth / 2, screenHeight / 2 - phaseHeight / 2,
+                    screenWidth / 2 + phaseWidth / 2, screenHeight / 2 + phaseHeight / 2, mPaint);
+
+            //绘制卡牌放置区域
+            mPaint.setColor(0xFFC3AB85);
+            //player2
+            canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                    screenWidth / 2 + cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
+            canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                    screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
+            canvas.drawRect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                    screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
+            //player1
+            canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                    screenWidth / 2 + cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
+            canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                    screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
+            canvas.drawRect(screenWidth / 2  + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                    screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
+
+            //绘制手卡区域
+            mPaint.setColor(0xFFC36E81);
+            //player2
+            canvas.drawRect(0, 0,
+                    handCardListWidth, handCardListHeight, mPaint);
+            //player1
+            canvas.drawRect(screenWidth - handCardListWidth, screenHeight - handCardListHeight,
+                    screenWidth, screenHeight, mPaint);
 
 
-        //绘制个人头像区域
-        mPaint.setColor(0xFF68A9C3);
-        //player2
-        canvas.drawRect(screenWidth - avatarLength, 0,
-                screenWidth, avatarLength, mPaint);
-        //player1
-        canvas.drawRect(0, screenHeight - avatarLength,
-                avatarLength, screenHeight, mPaint);
+            //绘制个人头像区域
+            mPaint.setColor(0xFF68A9C3);
+            //player2
+            canvas.drawRect(screenWidth - avatarLength, 0,
+                    screenWidth, avatarLength, mPaint);
+            //player1
+            canvas.drawRect(0, screenHeight - avatarLength,
+                    avatarLength, screenHeight, mPaint);
 
-        //绘制个人HP区域
-        mPaint.setColor(0xFF5CC3A1);
-        //player2
-        canvas.drawRect(screenWidth - infoWidth, avatarLength,
-                screenWidth, avatarLength + infoHeight, mPaint);
-        //player1
-        canvas.drawRect(0, screenHeight - avatarLength - infoHeight,
-                infoWidth, screenHeight - avatarLength, mPaint);
+            //绘制个人HP区域
+            mPaint.setColor(0xFF5CC3A1);
+            //player2
+            canvas.drawRect(screenWidth - infoWidth, avatarLength,
+                    screenWidth, avatarLength + infoHeight, mPaint);
+            //player1
+            canvas.drawRect(0, screenHeight - avatarLength - infoHeight,
+                    infoWidth, screenHeight - avatarLength, mPaint);
 
-        //绘制两侧的卡组区域
-        mPaint.setColor(0xFFA39BC4);
-        //player2
-        canvas.drawRect(0, avatarLength + infoHeight - deckHeight,
-                deckWidth, avatarLength + infoHeight, mPaint);
-        //player1
-        canvas.drawRect(screenWidth - deckWidth, screenHeight - avatarLength - infoHeight,
-                screenWidth, screenHeight - avatarLength - infoHeight + deckHeight, mPaint);
-
-
-
-        //canvas.drawBitmap(mBitmap1, 50, 50, mPaint);
-
-        //canvas.drawBitmap(mBitmap2, 100, 450, mPaint);
-        /*
-        mPaint.setColor(Color.BLUE);
-        canvas.drawText("啊", 10, 120, mPaint);
-        */
+            //绘制两侧的卡组区域
+            mPaint.setColor(0xFFA39BC4);
+            //player2
+            canvas.drawRect(0, avatarLength + infoHeight - deckHeight,
+                    deckWidth, avatarLength + infoHeight, mPaint);
+            //player1
+            canvas.drawRect(screenWidth - deckWidth, screenHeight - avatarLength - infoHeight,
+                    screenWidth, screenHeight - avatarLength - infoHeight + deckHeight, mPaint);
+        }
     }
 
     public Bitmap resizeBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -161,7 +229,7 @@ public class GameView extends View {
         return newbm;
     }
 
-    public static int getStatusBarHeight(Context context){
+    public int getStatusBarHeight(Context context){
         Class<?> c = null;
         Object obj = null;
         Field field = null;
@@ -177,4 +245,5 @@ public class GameView extends View {
         }
         return statusBarHeight;
     }
+
 }
