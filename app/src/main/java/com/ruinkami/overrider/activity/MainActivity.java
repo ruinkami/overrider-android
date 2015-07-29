@@ -12,7 +12,7 @@ import com.ruinkami.overrider.R;
 /**
  * Created by ruinkami on 2015/7/15.
  */
-public class MainActivity extends Activity implements View.OnClickListener{
+public class MainActivity extends Activity implements View.OnClickListener {
     Button startBtn;
 
     @Override

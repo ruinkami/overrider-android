@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.os.Parcelable;
 import android.util.DisplayMetrics;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
@@ -41,7 +42,7 @@ public class GameView extends SurfaceView implements Callback {
 
     }
 
-    public void initialView(Context context){
+    public void initialView(Context context) {
         DisplayMetrics dm = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(dm);
         screenWidth = dm.widthPixels;
@@ -67,18 +68,18 @@ public class GameView extends SurfaceView implements Callback {
         //mPaint = new Paint();
     }
 
-    private void init(){
+    private void init() {
         SurfaceHolder holder = getHolder();
         holder.addCallback(this); //设置Surface生命周期回调
-        thread = new LoopThread(holder, getContext());
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,int height) {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        thread = new LoopThread(holder, getContext());
         thread.isRunning = true;
         thread.start();
     }
@@ -95,10 +96,10 @@ public class GameView extends SurfaceView implements Callback {
 
     /**
      * 执行绘制的绘制线程
-     * @author Administrator
      *
+     * @author Administrator
      */
-    class LoopThread extends Thread{
+    class LoopThread extends Thread {
 
         SurfaceHolder surfaceHolder;
         Context context;
@@ -106,7 +107,7 @@ public class GameView extends SurfaceView implements Callback {
         float radius = 10f;
         Paint mPaint;
 
-        public LoopThread(SurfaceHolder surfaceHolder,Context context){
+        public LoopThread(SurfaceHolder surfaceHolder, Context context) {
 
             this.surfaceHolder = surfaceHolder;
             this.context = context;
@@ -120,11 +121,13 @@ public class GameView extends SurfaceView implements Callback {
         @Override
         public void run() {
             Canvas canvas = null;
-            while(isRunning){
-                try{
+            while (isRunning) {
+                try {
                     synchronized (surfaceHolder) {
                         canvas = surfaceHolder.lockCanvas(null);
-                        doDraw(canvas);
+                        if (canvas != null) {
+                            doDraw(canvas);
+                        }
                         //通过它来控制帧数执行一次绘制后休息50ms
                         Thread.sleep(50);
                     }
@@ -138,7 +141,7 @@ public class GameView extends SurfaceView implements Callback {
             }
         }
 
-        public void doDraw(Canvas canvas){
+        public void doDraw(Canvas canvas) {
             //这个很重要，清屏操作，清楚掉上次绘制的残留图像
 //            canvas.drawColor(Color.BLACK);
 //            canvas.translate(200, 200);
@@ -172,7 +175,7 @@ public class GameView extends SurfaceView implements Callback {
                     screenWidth / 2 + cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
             canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
                     screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
-            canvas.drawRect(screenWidth / 2  + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+            canvas.drawRect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
                     screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
 
             //绘制手卡区域
@@ -229,7 +232,7 @@ public class GameView extends SurfaceView implements Callback {
         return newbm;
     }
 
-    public int getStatusBarHeight(Context context){
+    public int getStatusBarHeight(Context context) {
         Class<?> c = null;
         Object obj = null;
         Field field = null;
@@ -244,6 +247,16 @@ public class GameView extends SurfaceView implements Callback {
             e1.printStackTrace();
         }
         return statusBarHeight;
+    }
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Parcelable superState = super.onSaveInstanceState();
+        return superState;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
     }
 
 }
