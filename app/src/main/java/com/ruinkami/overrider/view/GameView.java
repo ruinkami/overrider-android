@@ -10,9 +10,11 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Parcelable;
 import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.view.View;
 
 import com.ruinkami.overrider.R;
 
@@ -22,7 +24,7 @@ import java.lang.reflect.Field;
  * Created by ruinkami on 2015/7/24.
  */
 
-public class GameView extends SurfaceView implements Callback {
+public class GameView extends SurfaceView implements Callback, View.OnTouchListener {
     //Paint mPaint; //画笔,包含了画几何图形、文本等的样式和颜色信息
     Bitmap mBitmap1, mBitmap2;
     int screenWidth, screenHeight;
@@ -39,7 +41,7 @@ public class GameView extends SurfaceView implements Callback {
         super(context);
         initialView(context);
         init(); //初始化,设置生命周期回调方法
-
+        this.setOnTouchListener(this);
     }
 
     public void initialView(Context context) {
@@ -92,6 +94,22 @@ public class GameView extends SurfaceView implements Callback {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        // TODO Auto-generated method stub
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                break;
+            default:
+                break;
+        }
+        return true;
     }
 
     /**
