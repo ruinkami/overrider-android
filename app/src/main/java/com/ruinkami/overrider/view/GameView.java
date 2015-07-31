@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Parcelable;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
@@ -26,16 +27,16 @@ import java.lang.reflect.Field;
 
 public class GameView extends SurfaceView implements Callback, View.OnTouchListener {
     //Paint mPaint; //画笔,包含了画几何图形、文本等的样式和颜色信息
-    Bitmap mBitmap1, mBitmap2;
-    int screenWidth, screenHeight;
-    int cardWidth, cardHeight;
-    int phaseWidth, phaseHeight;
-    int deckWidth, deckHeight;
-    int handCardListWidth, handCardListHeight;
-    int avatarLength;
-    int infoWidth, infoHeight;
-    int marginDefault;
-    LoopThread thread;
+    private Bitmap mBitmap1, mBitmap2;
+    private int screenWidth, screenHeight;
+    private int cardWidth, cardHeight;
+    private int phaseWidth, phaseHeight;
+    private int deckWidth, deckHeight;
+    private int handCardListWidth, handCardListHeight;
+    private int avatarLength;
+    private int infoWidth, infoHeight;
+    private int marginDefault;
+    private LoopThread thread;
 
     public GameView(Context context) {
         super(context);
@@ -50,6 +51,16 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         screenWidth = dm.widthPixels;
         screenHeight = dm.heightPixels - getStatusBarHeight(context);
 
+        initSize();
+
+        mBitmap1 = BitmapFactory.decodeResource(getResources(), R.drawable.c1);
+        mBitmap1 = resizeBitmap(mBitmap1, cardWidth, cardHeight);
+        mBitmap2 = BitmapFactory.decodeResource(getResources(), R.drawable.c2);
+
+        //mPaint = new Paint();
+    }
+
+    private void initSize() {
         cardWidth = (int) getResources().getDimension(R.dimen.card_width);
         cardHeight = (int) getResources().getDimension(R.dimen.card_height);
         phaseWidth = (int) getResources().getDimension(R.dimen.phase_width);
@@ -62,12 +73,118 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         infoWidth = (int) getResources().getDimension(R.dimen.info_width);
         infoHeight = (int) getResources().getDimension(R.dimen.info_height);
         marginDefault = (int) getResources().getDimension(R.dimen.margin_default);
+    }
 
-        mBitmap1 = BitmapFactory.decodeResource(getResources(), R.drawable.c1);
-        mBitmap1 = resizeBitmap(mBitmap1, cardWidth, cardHeight);
-        mBitmap2 = BitmapFactory.decodeResource(getResources(), R.drawable.c2);
+    private Rect getFieldRect(){
+        Rect r = new Rect(0, 0, screenWidth, screenHeight);
+        return r;
+    }
 
-        //mPaint = new Paint();
+    private Rect getPhaseRect(){
+        Rect r = new Rect(screenWidth / 2 - phaseWidth / 2, screenHeight / 2 - phaseHeight / 2,
+                screenWidth / 2 + phaseWidth / 2, screenHeight / 2 + phaseHeight / 2);
+        return r;
+    }
+
+    private Rect getCardRect(CardLocation cl){
+        Rect r=null;
+        switch(cl){
+            case LeftTop:
+                r = new Rect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                        screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault);
+                break;
+            case MiddleTop:
+                r = new Rect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                        screenWidth / 2 + cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault);
+                break;
+            case RightTop:
+                r = new Rect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
+                        screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault);
+                break;
+            case LeftBottom:
+                r = new Rect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                        screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault);
+                break;
+            case MiddleBottom:
+                r = new Rect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                        screenWidth / 2 + cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault);
+                break;
+            case RightBottom:
+                r = new Rect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
+                        screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault);
+                break;
+            default:
+                break;
+        }
+        return r;
+    }
+
+    private Rect getHandCardRect(Player p){
+        Rect r=null;
+        switch(p){
+            case Player1:
+                r = new Rect(screenWidth - handCardListWidth, screenHeight - handCardListHeight,
+                        screenWidth, screenHeight);
+                break;
+            case Player2:
+                r = new Rect(0, 0,
+                        handCardListWidth, handCardListHeight);
+                break;
+            default:
+                break;
+        }
+        return r;
+    }
+
+    private Rect getAvatarRect(Player p){
+        Rect r=null;
+        switch(p){
+            case Player1:
+                r = new Rect(0, screenHeight - avatarLength,
+                        avatarLength, screenHeight);
+                break;
+            case Player2:
+                r = new Rect(screenWidth - avatarLength, 0,
+                        screenWidth, avatarLength);
+                break;
+            default:
+                break;
+        }
+        return r;
+    }
+
+    private Rect getHPRect(Player p){
+        Rect r=null;
+        switch(p){
+            case Player1:
+                r = new Rect(0, screenHeight - avatarLength - infoHeight,
+                        infoWidth, screenHeight - avatarLength);
+                break;
+            case Player2:
+                r = new Rect(screenWidth - infoWidth, avatarLength,
+                        screenWidth, avatarLength + infoHeight);
+                break;
+            default:
+                break;
+        }
+        return r;
+    }
+
+    private Rect getDeckRect(Player p){
+        Rect r=null;
+        switch(p){
+            case Player1:
+                r = new Rect(screenWidth - deckWidth, screenHeight - avatarLength - infoHeight,
+                        screenWidth, screenHeight - avatarLength - infoHeight + deckHeight);
+                break;
+            case Player2:
+                r = new Rect(0, avatarLength + infoHeight - deckHeight,
+                        deckWidth, avatarLength + infoHeight);
+                break;
+            default:
+                break;
+        }
+        return r;
     }
 
     private void init() {
@@ -172,66 +289,56 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
 
             //绘制底部场地
             mPaint.setColor(0xFFDDDDDD);
-            canvas.drawRect(0, 0, screenWidth, screenHeight, mPaint);
+            canvas.drawRect(getFieldRect(), mPaint);
 
             //绘制中间的游戏阶段区域
             mPaint.setColor(0xFFB2C3B2);
-            canvas.drawRect(screenWidth / 2 - phaseWidth / 2, screenHeight / 2 - phaseHeight / 2,
-                    screenWidth / 2 + phaseWidth / 2, screenHeight / 2 + phaseHeight / 2, mPaint);
+            canvas.drawRect(getPhaseRect(), mPaint);
 
             //绘制卡牌放置区域
-            mPaint.setColor(0xFFC3AB85);
             //player2
-            canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                    screenWidth / 2 + cardWidth / 2, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
-            canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                    screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
-            canvas.drawRect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
-                    screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault, mPaint);
+            mPaint.setColor(0x77C3AB85);
+            canvas.drawRect(getCardRect(CardLocation.LeftTop), mPaint);
+            canvas.drawRect(getCardRect(CardLocation.MiddleTop), mPaint);
+            canvas.drawRect(getCardRect(CardLocation.RightTop), mPaint);
             //player1
-            canvas.drawRect(screenWidth / 2 - cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                    screenWidth / 2 + cardWidth / 2, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
-            canvas.drawRect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                    screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
-            canvas.drawRect(screenWidth / 2 + cardWidth / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + marginDefault,
-                    screenWidth / 2 + cardWidth * 3 / 2 + marginDefault, screenHeight / 2 + phaseHeight / 2 + cardHeight + marginDefault, mPaint);
+            mPaint.setColor(0xFFC3AB85);
+            canvas.drawRect(getCardRect(CardLocation.LeftBottom), mPaint);
+            canvas.drawRect(getCardRect(CardLocation.MiddleBottom), mPaint);
+            canvas.drawRect(getCardRect(CardLocation.RightBottom), mPaint);
 
             //绘制手卡区域
-            mPaint.setColor(0xFFC36E81);
             //player2
-            canvas.drawRect(0, 0,
-                    handCardListWidth, handCardListHeight, mPaint);
+            mPaint.setColor(0x77C36E81);
+            canvas.drawRect(getHandCardRect(Player.Player2), mPaint);
             //player1
-            canvas.drawRect(screenWidth - handCardListWidth, screenHeight - handCardListHeight,
-                    screenWidth, screenHeight, mPaint);
+            mPaint.setColor(0xFFC36E81);
+            canvas.drawRect(getHandCardRect(Player.Player1), mPaint);
 
 
             //绘制个人头像区域
-            mPaint.setColor(0xFF68A9C3);
             //player2
-            canvas.drawRect(screenWidth - avatarLength, 0,
-                    screenWidth, avatarLength, mPaint);
+            mPaint.setColor(0x7768A9C3);
+            canvas.drawRect(getAvatarRect(Player.Player2), mPaint);
+            mPaint.setColor(0xFF68A9C3);
             //player1
-            canvas.drawRect(0, screenHeight - avatarLength,
-                    avatarLength, screenHeight, mPaint);
+            canvas.drawRect(getAvatarRect(Player.Player1), mPaint);
 
             //绘制个人HP区域
-            mPaint.setColor(0xFF5CC3A1);
             //player2
-            canvas.drawRect(screenWidth - infoWidth, avatarLength,
-                    screenWidth, avatarLength + infoHeight, mPaint);
+            mPaint.setColor(0x775CC3A1);
+            canvas.drawRect(getHPRect(Player.Player2), mPaint);
             //player1
-            canvas.drawRect(0, screenHeight - avatarLength - infoHeight,
-                    infoWidth, screenHeight - avatarLength, mPaint);
+            mPaint.setColor(0xFF5CC3A1);
+            canvas.drawRect(getHPRect(Player.Player1), mPaint);
 
             //绘制两侧的卡组区域
-            mPaint.setColor(0xFFA39BC4);
             //player2
-            canvas.drawRect(0, avatarLength + infoHeight - deckHeight,
-                    deckWidth, avatarLength + infoHeight, mPaint);
+            mPaint.setColor(0x77A39BC4);
+            canvas.drawRect(getDeckRect(Player.Player2), mPaint);
             //player1
-            canvas.drawRect(screenWidth - deckWidth, screenHeight - avatarLength - infoHeight,
-                    screenWidth, screenHeight - avatarLength - infoHeight + deckHeight, mPaint);
+            mPaint.setColor(0xFFA39BC4);
+            canvas.drawRect(getDeckRect(Player.Player1), mPaint);
         }
     }
 
@@ -275,6 +382,14 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
 
     @Override
     public void onRestoreInstanceState(Parcelable state) {
+    }
+
+    public enum CardLocation {
+        LeftTop,MiddleTop,RightTop,LeftBottom,MiddleBottom,RightBottom
+    }
+
+    public enum Player {
+        Player1,Player2
     }
 
 }
