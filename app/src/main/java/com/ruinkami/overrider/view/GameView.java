@@ -75,20 +75,20 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         marginDefault = (int) getResources().getDimension(R.dimen.margin_default);
     }
 
-    private Rect getFieldRect(){
+    private Rect getFieldRect() {
         Rect r = new Rect(0, 0, screenWidth, screenHeight);
         return r;
     }
 
-    private Rect getPhaseRect(){
+    private Rect getPhaseRect() {
         Rect r = new Rect(screenWidth / 2 - phaseWidth / 2, screenHeight / 2 - phaseHeight / 2,
                 screenWidth / 2 + phaseWidth / 2, screenHeight / 2 + phaseHeight / 2);
         return r;
     }
 
-    private Rect getCardRect(CardLocation cl){
-        Rect r=null;
-        switch(cl){
+    private Rect getCardRect(CardLocation cl) {
+        Rect r = null;
+        switch (cl) {
             case LeftTop:
                 r = new Rect(screenWidth / 2 - cardWidth * 3 / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault - cardHeight,
                         screenWidth / 2 - cardWidth / 2 - marginDefault, screenHeight / 2 - phaseHeight / 2 - marginDefault);
@@ -119,9 +119,9 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         return r;
     }
 
-    private Rect getHandCardRect(Player p){
-        Rect r=null;
-        switch(p){
+    private Rect getHandCardRect(Player p) {
+        Rect r = null;
+        switch (p) {
             case Player1:
                 r = new Rect(screenWidth - handCardListWidth, screenHeight - handCardListHeight,
                         screenWidth, screenHeight);
@@ -136,9 +136,9 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         return r;
     }
 
-    private Rect getAvatarRect(Player p){
-        Rect r=null;
-        switch(p){
+    private Rect getAvatarRect(Player p) {
+        Rect r = null;
+        switch (p) {
             case Player1:
                 r = new Rect(0, screenHeight - avatarLength,
                         avatarLength, screenHeight);
@@ -153,9 +153,9 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         return r;
     }
 
-    private Rect getHPRect(Player p){
-        Rect r=null;
-        switch(p){
+    private Rect getHPRect(Player p) {
+        Rect r = null;
+        switch (p) {
             case Player1:
                 r = new Rect(0, screenHeight - avatarLength - infoHeight,
                         infoWidth, screenHeight - avatarLength);
@@ -170,9 +170,9 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         return r;
     }
 
-    private Rect getDeckRect(Player p){
-        Rect r=null;
-        switch(p){
+    private Rect getDeckRect(Player p) {
+        Rect r = null;
+        switch (p) {
             case Player1:
                 r = new Rect(screenWidth - deckWidth, screenHeight - avatarLength - infoHeight,
                         screenWidth, screenHeight - avatarLength - infoHeight + deckHeight);
@@ -218,6 +218,7 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         // TODO Auto-generated method stub
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                getX();
                 break;
             case MotionEvent.ACTION_MOVE:
                 break;
@@ -342,6 +343,51 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
         }
     }
 
+    public Position judgePosition(int x, int y) {
+        if (judgeXY2Rect(x, y, getPhaseRect())) {
+            return Position.inPhase;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.LeftTop))) {
+            return Position.inCardLeftTop;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.MiddleTop))) {
+            return Position.inCardMiddleTop;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.RightTop))) {
+            return Position.inCardRightTop;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.LeftBottom))) {
+            return Position.inCardLeftBottom;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.MiddleBottom))) {
+            return Position.inCardMiddleBottom;
+        } else if (judgeXY2Rect(x, y, getCardRect(CardLocation.RightBottom))) {
+            return Position.inCardRightBottom;
+        } else if (judgeXY2Rect(x, y, getHandCardRect(Player.Player1))) {
+            return Position.inHandCardPlayer1;
+        } else if (judgeXY2Rect(x, y, getHandCardRect(Player.Player2))) {
+            return Position.inHandCardPlayer2;
+        } else if (judgeXY2Rect(x, y, getAvatarRect(Player.Player1))) {
+            return Position.inAvatarPlayer1;
+        } else if (judgeXY2Rect(x, y, getAvatarRect(Player.Player2))) {
+            return Position.inAvatarPlayer2;
+        } else if (judgeXY2Rect(x, y, getDeckRect(Player.Player1))) {
+            return Position.inDeckPlayer1;
+        } else if (judgeXY2Rect(x, y, getDeckRect(Player.Player2))) {
+            return Position.inDeckPlayer2;
+        } else if (judgeXY2Rect(x, y, getHPRect(Player.Player1))) {
+            return Position.inHpPlayer1;
+        } else if (judgeXY2Rect(x, y, getHPRect(Player.Player2))) {
+            return Position.inHpPlayer2;
+        } else if (judgeXY2Rect(x, y, getFieldRect())) {
+            return Position.inField;
+        }
+        return Position.inAvatarPlayer1.inNone;
+    }
+
+    private boolean judgeXY2Rect(int x, int y, Rect r) {
+        if (x >= r.left && x <= r.right
+                && y >= r.top && y <= r.bottom) {
+            return true;
+        }
+        return false;
+    }
+
     public Bitmap resizeBitmap(Bitmap bm, int newWidth, int newHeight) {
         // 获得图片的宽高
         int width = bm.getWidth();
@@ -385,11 +431,21 @@ public class GameView extends SurfaceView implements Callback, View.OnTouchListe
     }
 
     public enum CardLocation {
-        LeftTop,MiddleTop,RightTop,LeftBottom,MiddleBottom,RightBottom
+        LeftTop, MiddleTop, RightTop, LeftBottom, MiddleBottom, RightBottom
     }
 
     public enum Player {
-        Player1,Player2
+        Player1, Player2
+    }
+
+    public enum Position {
+        inField, inPhase, inNone,
+        inCardLeftTop, inCardMiddleTop, inCardRightTop,
+        inCardLeftBottom, inCardMiddleBottom, inCardRightBottom,
+        inHandCardPlayer1, inHandCardPlayer2,
+        inAvatarPlayer1, inAvatarPlayer2,
+        inHpPlayer1, inHpPlayer2,
+        inDeckPlayer1, inDeckPlayer2
     }
 
 }
